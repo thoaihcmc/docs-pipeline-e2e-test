@@ -11,6 +11,7 @@ Usage examples:
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
@@ -54,6 +55,11 @@ def calculate(op: str, a: float, b: float = 0.0) -> float:
     if op == "sqrt" and a < 0:
         raise ValueError("Cannot calculate sqrt of negative number")
     return OPS[op](a, b)
+
+
+def get_today_date() -> str:
+    """Return today's date in YYYY-MM-DD format."""
+    return datetime.now().strftime("%Y-%m-%d")
 
 
 def run_interactive() -> None:
@@ -105,12 +111,15 @@ def run_gui() -> None:
     main = ttk.Frame(root, padding=12)
     main.grid(row=0, column=0, sticky="nsew")
 
-    ttk.Label(main, text="First number").grid(row=0, column=0, sticky="w", pady=(0, 4))
+    date_var = tk.StringVar(value=f"Today: {get_today_date()}")
+    ttk.Label(main, textvariable=date_var).grid(row=0, column=0, sticky="w", pady=(0, 8))
+
+    ttk.Label(main, text="First number").grid(row=1, column=0, sticky="w", pady=(0, 4))
     first_var = tk.StringVar()
     first_entry = ttk.Entry(main, textvariable=first_var, width=20)
-    first_entry.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+    first_entry.grid(row=2, column=0, sticky="ew", pady=(0, 10))
 
-    ttk.Label(main, text="Operation").grid(row=2, column=0, sticky="w", pady=(0, 4))
+    ttk.Label(main, text="Operation").grid(row=3, column=0, sticky="w", pady=(0, 4))
     op_var = tk.StringVar(value="add")
     op_combo = ttk.Combobox(
         main,
@@ -119,19 +128,19 @@ def run_gui() -> None:
         state="readonly",
         width=18,
     )
-    op_combo.grid(row=3, column=0, sticky="ew", pady=(0, 10))
+    op_combo.grid(row=4, column=0, sticky="ew", pady=(0, 10))
 
-    ttk.Label(main, text="Second number").grid(row=4, column=0, sticky="w", pady=(0, 4))
+    ttk.Label(main, text="Second number").grid(row=5, column=0, sticky="w", pady=(0, 4))
     second_var = tk.StringVar()
     second_entry = ttk.Entry(main, textvariable=second_var, width=20)
-    second_entry.grid(row=5, column=0, sticky="ew", pady=(0, 10))
+    second_entry.grid(row=6, column=0, sticky="ew", pady=(0, 10))
 
     result_var = tk.StringVar(value="Result: -")
-    ttk.Label(main, textvariable=result_var).grid(row=7, column=0, sticky="w", pady=(8, 0))
+    ttk.Label(main, textvariable=result_var).grid(row=8, column=0, sticky="w", pady=(8, 0))
 
-    ttk.Label(main, text="History").grid(row=9, column=0, sticky="w", pady=(10, 4))
+    ttk.Label(main, text="History").grid(row=11, column=0, sticky="w", pady=(10, 4))
     history_list = tk.Listbox(main, height=6, width=36)
-    history_list.grid(row=10, column=0, sticky="ew")
+    history_list.grid(row=12, column=0, sticky="ew")
 
     def on_calculate() -> None:
         try:
@@ -173,7 +182,7 @@ def run_gui() -> None:
     op_var.trace_add("write", on_op_change)
 
     buttons = ttk.Frame(main)
-    buttons.grid(row=6, column=0, sticky="ew")
+    buttons.grid(row=7, column=0, sticky="ew")
     buttons.columnconfigure(0, weight=1)
     buttons.columnconfigure(1, weight=1)
     ttk.Button(buttons, text="Calculate", command=on_calculate).grid(
@@ -193,8 +202,14 @@ def run_gui() -> None:
             root.update_idletasks()
 
     ttk.Button(main, text="Copy result", command=on_copy_result).grid(
-        row=8, column=0, sticky="ew", pady=(6, 0)
+        row=9, column=0, sticky="ew", pady=(6, 0)
     )
+
+    ttk.Button(
+        main,
+        text="Refresh date",
+        command=lambda: date_var.set(f"Today: {get_today_date()}"),
+    ).grid(row=10, column=0, sticky="ew", pady=(6, 0))
 
     first_entry.focus_set()
     root.bind("<Return>", lambda _event: on_calculate())
@@ -204,6 +219,7 @@ def run_gui() -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Simple Python calculator app")
     parser.add_argument("--gui", action="store_true", help="launch graphical calculator")
+    parser.add_argument("--today", action="store_true", help="print today's date")
     parser.add_argument("operation", nargs="?", choices=sorted(OPS.keys()))
     parser.add_argument("a", nargs="?", type=float)
     parser.add_argument("b", nargs="?", type=float)
@@ -216,6 +232,10 @@ def main() -> None:
 
     if args.gui:
         run_gui()
+        return
+
+    if args.today:
+        print(get_today_date())
         return
 
     if args.operation is None:
