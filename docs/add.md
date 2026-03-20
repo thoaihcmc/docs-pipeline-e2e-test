@@ -4,34 +4,29 @@
 The architecture of the system is designed in adherence to modern software engineering principles to ensure scalability and robustness.
 
 ### Architecture Overview  
-- **Frontend**: React.js for building user interfaces.  
-- **Backend**: Node.js with Express for managing API requests.  
-- **Database**: PostgreSQL for data storage.
+- **Frontend**: Command Line Interface (CLI) and Graphical User Interface (GUI) are available for user interaction with the calculator functionalities.
+- **Backend**: Python script that processes calculator operations and manages inputs.
 
-    Evidence Path: "docs/add.md"
+    Evidence Path: "calculator.py"
 
 ### Component Diagram  
 ```mermaid
 classDiagram  
-  class User {  
-    +String username  
-    +String password  
+  class Calculator {  
+    +void calculate(operation: str, a: float, b: float)  
+    +void run_interactive()  
+    +void run_gui()  
   }  
-  class Report {  
-    +String title  
-    +Date createdDate  
+  class Operation {  
+    +String type  
+    +float operand1  
+    +float operand2  
   }  
-  User --> Report
+  Calculator --> Operation
 ```
 
 ### Database Schema  
-```mermaid
-databaseEntity  
-  entity User {  
-    +String username  
-    +String password  
-  }
-```
+Not applicable as the calculator does not interact with a database.
 
 ## Conclusion  
 This ADD outlines the fundamental architecture that will support the development and deployment of the system, ensuring durability and performance.
