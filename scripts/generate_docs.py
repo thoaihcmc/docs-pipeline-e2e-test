@@ -24,7 +24,29 @@ def _load_manifest(manifest_path: str) -> dict:
         return json.load(f)
 
 
-def _build_system_prompt(manifest: dict) -> str:
+def _read_existing_docs(repo_path: str) -> dict[str, str]:
+    """Read current docs/diagrams from disk so the model can see what exists and update it."""
+    repo = Path(repo_path)
+    existing = {}
+    files_to_read = {
+        "fdd": repo / pipeline_config.APPROVED_DOCS_DIR / "fdd.md",
+        "bdd": repo / pipeline_config.APPROVED_DOCS_DIR / "bdd.md",
+        "add": repo / pipeline_config.APPROVED_DOCS_DIR / "add.md",
+        "architecture_diagram": repo / pipeline_config.APPROVED_DIAGRAMS_DIR / "architecture.mmd",
+        "state_machine_diagram": repo / pipeline_config.APPROVED_DIAGRAMS_DIR / "state-machine.mmd",
+        "class_diagram": repo / pipeline_config.APPROVED_DIAGRAMS_DIR / "class.mmd",
+        "database_entity_diagram": repo / pipeline_config.APPROVED_DIAGRAMS_DIR / "database-entity.mmd",
+    }
+    for key, path in files_to_read.items():
+        if path.exists():
+            try:
+                existing[key] = path.read_text(encoding="utf-8", errors="replace")[:12000]
+            except OSError:
+                pass
+    return existing
+
+
+def _build_system_prompt(manifest: dict, existing_docs: dict[str, str]) -> str:
     evidence_ids = manifest.get("evidence_ids", [])
     primary_evidence_ids = manifest.get("primary_evidence_ids", [])
     evidence = manifest.get("evidence", {})
@@ -64,17 +86,28 @@ def _build_system_prompt(manifest: dict) -> str:
         snippet = (data.get("content_snippet") or "")[:8000]
         parts.append(f"\n--- {path} ---\n{snippet}")
 
+    # Feed existing docs so model can see what needs updating.
+    if existing_docs:
+        parts.append("\n\n=== EXISTING DOCUMENTATION (update these, do NOT regenerate from scratch) ===")
+        parts.append("Compare the code evidence above against these existing docs. "
+                      "Add any new modules/functions/classes that are missing. "
+                      "Remove anything that no longer exists in the code. "
+                      "Update anything that changed.")
+        for doc_key, doc_content in existing_docs.items():
+            parts.append(f"\n--- EXISTING {doc_key} ---\n{doc_content}")
+
     return "\n".join(parts)
 
 
-def _call_openai(manifest: dict) -> dict:
+def _call_openai(manifest: dict, repo_path: str) -> dict:
     try:
         from openai import OpenAI
     except ImportError:
         raise SystemExit("openai package required. pip install openai")
 
     client = OpenAI()
-    system = _build_system_prompt(manifest)
+    existing_docs = _read_existing_docs(repo_path)
+    system = _build_system_prompt(manifest, existing_docs)
 
     # All changed product files that are in evidence, regardless of language.
     NON_PRODUCT_NAMES = {"__init__.py", "requirements.txt", "package.json", "go.mod", "Cargo.toml", "pyproject.toml"}
@@ -91,8 +124,24 @@ def _call_openai(manifest: dict) -> dict:
             + "\n".join(f"  - {m}" for m in primary_modules)
         )
 
+    has_existing = bool(existing_docs)
+    if has_existing:
+        update_instruction = (
+            "EXISTING DOCUMENTATION WAS PROVIDED. You must UPDATE it, not regenerate from scratch.\n"
+            "- Keep all existing content that is still accurate.\n"
+            "- ADD sections/nodes for any new modules, functions, classes, or files found in the code evidence.\n"
+            "- REMOVE sections/nodes for anything no longer present in the code.\n"
+            "- UPDATE sections/nodes where the code has changed.\n"
+            "- The result must reflect the COMPLETE CURRENT state of the repository.\n\n"
+        )
+    else:
+        update_instruction = (
+            "No existing documentation found. Generate fresh documentation from scratch.\n\n"
+        )
+
     user = (
-        "Generate ALL 7 outputs from the ENTIRE repository evidence:\n\n"
+        update_instruction
+        + "Produce ALL 7 outputs reflecting the ENTIRE repository:\n\n"
         "1. FDD (Functional Design Document): describe every functional capability found in ALL source files. "
         "Each source file must appear as a section or subsection.\n"
         "2. BDD (Business Design Document): describe the business logic and processes from ALL source files.\n"
@@ -241,7 +290,7 @@ def main() -> None:
     manifest = _load_manifest(args.manifest)
     commit = args.commit or manifest.get("commit", "unknown")
 
-    data = _call_openai(manifest)
+    data = _call_openai(manifest, args.repo)
     _write_outputs(args.repo, data, commit)
     print("Generated FDD, BDD, ADD and 4 diagrams in approved paths.", file=sys.stderr)
 
