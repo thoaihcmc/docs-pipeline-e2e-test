@@ -1,0 +1,7 @@
+```mermaid
+  graph TD;
+    A[User Frontend] -->|Requests| B[API Gateway];
+    B -->|Fetches data| C[Database];
+    C -->|Returns data| B;
+    B -->|Sends data| A;
+```
