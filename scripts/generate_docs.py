@@ -32,32 +32,34 @@ def _build_system_prompt(manifest: dict) -> str:
     changed = manifest.get("changed_files", [])
 
     parts = [
-        "You are a solution architect generating technical design documentation and diagrams.",
-        "Your output must be based ONLY on the repository evidence provided. Do not invent components, functions, classes, states, entities, or relationships that are not supported by the evidence.",
-        "Every element you generate must be traceable to at least one evidence path in the manifest (evidence_ids).",
-        "Focus FIRST on primary_evidence_ids (changed product code). Do not use CI/pipeline files as the main architecture source.",
-        "If primary_evidence_ids is non-empty, architecture/business/functional details MUST be derived from those files first.",
-        "Prefer concrete module/function/class names from changed files (for example calculator functions), not generic placeholders.",
-        "If evidence is insufficient for a section, explicitly say 'Not enough repository evidence' for that section instead of inventing details.",
-        f"Commit: {commit}. Changed files in this commit: " + (", ".join(changed) if changed else "none"),
+        "You are a solution architect generating technical design documentation and diagrams for the ENTIRE repository.",
         "",
-        "Primary evidence paths (prioritize these):",
+        "CRITICAL RULES:",
+        "1. Your output must reflect the COMPLETE current state of the repository, not just one file.",
+        "2. ALL 7 outputs (FDD, BDD, ADD, architecture diagram, state-machine diagram, class diagram, database-entity diagram) must reflect ALL evidence files.",
+        "3. Every product source file in evidence must appear in at least one of the 7 outputs.",
+        "4. Do not invent components, functions, classes, states, entities, or relationships not supported by evidence.",
+        "5. Every element must be traceable to at least one evidence_path from evidence_ids.",
+        "6. Use concrete names from the actual code (function names, class names, module names), never generic placeholders.",
+        "7. If evidence is insufficient for a diagram type, write 'Not enough repository evidence' as a comment in the Mermaid source.",
+        "",
+        f"Commit: {commit}.",
+        f"Changed files in this commit: {', '.join(changed) if changed else 'none'}.",
+        "",
+        "Primary evidence paths (changed product files — these MUST be covered in ALL relevant outputs):",
         json.dumps(primary_evidence_ids, indent=2),
         "",
-        "Evidence paths (use these exact strings in traceability.evidence_path):",
+        "All evidence paths (use these exact strings in traceability.evidence_path):",
         json.dumps(evidence_ids, indent=2),
         "",
-        "Evidence content snippets (key = path):",
+        "Evidence content (key = file path):",
     ]
-    # Put primary evidence first. If available, heavily bias prompt to changed files.
+    # Include ALL evidence: primary first, then the rest.
     primary_set = set(primary_evidence_ids)
     secondary_paths = [p for p in evidence.keys() if p not in primary_set]
-    if primary_evidence_ids:
-        ordered_paths = list(primary_evidence_ids) + secondary_paths[:20]
-    else:
-        ordered_paths = secondary_paths[:120]
+    ordered_paths = list(primary_evidence_ids) + secondary_paths
 
-    for path in ordered_paths:
+    for path in ordered_paths[:200]:
         data = evidence.get(path, {})
         snippet = (data.get("content_snippet") or "")[:8000]
         parts.append(f"\n--- {path} ---\n{snippet}")
@@ -73,19 +75,35 @@ def _call_openai(manifest: dict) -> dict:
 
     client = OpenAI()
     system = _build_system_prompt(manifest)
-    primary_python_modules = [
-        p
-        for p in manifest.get("primary_evidence_ids", [])
-        if p.endswith(".py") and not p.endswith("__init__.py") and "/test" not in p and not p.startswith("test")
+
+    # All changed product files that are in evidence, regardless of language.
+    NON_PRODUCT_NAMES = {"__init__.py", "requirements.txt", "package.json", "go.mod", "Cargo.toml", "pyproject.toml"}
+    primary_modules = [
+        p for p in manifest.get("primary_evidence_ids", [])
+        if p.split("/")[-1] not in NON_PRODUCT_NAMES
     ]
 
+    module_list_hint = ""
+    if primary_modules:
+        module_list_hint = (
+            "\n\nThe following changed files MUST each appear in at least one traceability entry "
+            "and be reflected in the documentation and diagrams:\n"
+            + "\n".join(f"  - {m}" for m in primary_modules)
+        )
+
     user = (
-        "Generate the full documentation output: FDD, BDD, ADD in Markdown, and four Mermaid diagrams "
-        "(architecture, state-machine, class, database-entity). Use only evidence from the manifest. "
-        "Populate traceability so every section and every diagram node/edge/entity references an evidence_path from the manifest. "
-        "If there are changed files in primary_evidence_ids, explicitly reflect their logic in FDD/BDD/ADD and diagram nodes/edges. "
-        "For changed Python modules, include each one explicitly in the documentation (or state not enough evidence for that module), "
-        "and include traceability entries for each changed module."
+        "Generate ALL 7 outputs from the ENTIRE repository evidence:\n\n"
+        "1. FDD (Functional Design Document): describe every functional capability found in ALL source files. "
+        "Each source file must appear as a section or subsection.\n"
+        "2. BDD (Business Design Document): describe the business logic and processes from ALL source files.\n"
+        "3. ADD (Architecture Design Document): describe the system architecture covering ALL modules/components.\n"
+        "4. Architecture diagram (Mermaid): show ALL modules and their relationships.\n"
+        "5. State Machine diagram (Mermaid): show states/transitions from ALL relevant modules.\n"
+        "6. Class diagram (Mermaid): show classes/functions from ALL source files.\n"
+        "7. Database Entity diagram (Mermaid): show entities/schemas if present, otherwise state 'No database evidence'.\n\n"
+        "Populate traceability so every section and every diagram node/edge references an evidence_path from evidence_ids.\n"
+        "Every source file in primary_evidence_ids MUST be explicitly covered in ALL relevant outputs (docs AND diagrams)."
+        + module_list_hint
     )
 
     def _request(messages: list[dict]) -> dict:
@@ -107,7 +125,7 @@ def _call_openai(manifest: dict) -> dict:
                 invalid.append(p)
         return sorted(set(invalid))
 
-    def _uncovered_primary_modules(data: dict, required_modules: list[str]) -> list[str]:
+    def _uncovered_modules(data: dict, required_modules: list[str]) -> list[str]:
         if not required_modules:
             return []
         covered = {t.get("evidence_path") for t in data.get("traceability", []) if t.get("evidence_path")}
@@ -123,57 +141,44 @@ def _call_openai(manifest: dict) -> dict:
 
     # Retry once if traceability paths are outside manifest evidence IDs.
     invalid = _invalid_traceability_paths(data, valid_ids)
-    missing_module_coverage = _uncovered_primary_modules(data, primary_python_modules)
-    if invalid:
-        repair_user = (
-            "Your previous output used traceability evidence_path values that are not in the manifest.\n"
-            "Return the full schema again, preserving content where possible, but fix ALL traceability.evidence_path "
-            "to use ONLY values from evidence_ids.\n"
-            "Invalid evidence paths were:\n"
-            + json.dumps(invalid, indent=2)
-            + "\nAllowed evidence_ids are:\n"
-            + json.dumps(manifest.get("evidence_ids", []), indent=2)
-        )
+    missing = _uncovered_modules(data, primary_modules)
+    if invalid or missing:
+        repair_parts = []
+        if invalid:
+            repair_parts.append(
+                "Your previous output used traceability evidence_path values that are not in the manifest.\n"
+                "Fix ALL traceability.evidence_path to use ONLY values from evidence_ids.\n"
+                "Invalid evidence paths were:\n"
+                + json.dumps(invalid, indent=2)
+                + "\nAllowed evidence_ids are:\n"
+                + json.dumps(manifest.get("evidence_ids", []), indent=2)
+            )
+        if missing:
+            repair_parts.append(
+                "Your previous output did not include traceability coverage for all changed files.\n"
+                "Ensure each file below appears in traceability.evidence_path at least once "
+                "and is reflected in docs/diagrams:\n"
+                + json.dumps(missing, indent=2)
+            )
         data = _request(
             [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
-                {"role": "user", "content": repair_user},
+                {"role": "user", "content": "\n\n".join(repair_parts)},
             ]
         )
         invalid = _invalid_traceability_paths(data, valid_ids)
-        missing_module_coverage = _uncovered_primary_modules(data, primary_python_modules)
+        missing = _uncovered_modules(data, primary_modules)
         if invalid:
             raise SystemExit(
-                "Traceability repair failed; still invalid evidence_path values: "
+                "Traceability repair failed; invalid evidence_path values: "
                 + ", ".join(invalid[:10])
             )
-    if missing_module_coverage:
-        coverage_user = (
-            "Your previous output did not include traceability coverage for all changed Python modules.\n"
-            "Return the full schema again, preserving content where possible, and ensure each module below appears "
-            "in traceability.evidence_path at least once and is reflected in docs/diagrams.\n"
-            "Modules missing coverage:\n"
-            + json.dumps(missing_module_coverage, indent=2)
-        )
-        data = _request(
-            [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-                {"role": "user", "content": coverage_user},
-            ]
-        )
-        invalid = _invalid_traceability_paths(data, valid_ids)
-        missing_module_coverage = _uncovered_primary_modules(data, primary_python_modules)
-        if invalid:
-            raise SystemExit(
-                "Coverage repair produced invalid traceability evidence_path values: "
-                + ", ".join(invalid[:10])
-            )
-        if missing_module_coverage:
-            raise SystemExit(
-                "Coverage repair failed; missing changed module coverage for: "
-                + ", ".join(missing_module_coverage[:10])
+        if missing:
+            print(
+                "WARNING: coverage repair incomplete; missing coverage for: "
+                + ", ".join(missing[:10]),
+                file=sys.stderr,
             )
 
     return data

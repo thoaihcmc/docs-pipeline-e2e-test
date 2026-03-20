@@ -108,6 +108,26 @@ def _collect_evidence(repo_path: str, commit: str) -> dict:
                 "changed": rel in changed,
             }
 
+    # Also include changed files that weren't matched by globs but exist on disk
+    # (catches any source file the glob patterns missed).
+    for cf in changed:
+        if cf in evidence:
+            continue
+        if cf.startswith(EXCLUDE_EVIDENCE_PREFIXES):
+            continue
+        fp = repo / cf
+        if fp.is_file():
+            parts = Path(cf).parts
+            if any(ign in parts for ign in IGNORE_DIRS):
+                continue
+            evidence[cf] = {
+                "path": cf,
+                "content_snippet": _read_file_snippet(fp),
+                "changed": True,
+            }
+
+    # Primary = all changed product files that made it into evidence.
+    # This drives generation to reflect every new/modified module regardless of language.
     changed_evidence_ids = [f for f in changed if f in evidence]
     unchanged_evidence_ids = [f for f in evidence.keys() if f not in set(changed_evidence_ids)]
 
@@ -117,7 +137,6 @@ def _collect_evidence(repo_path: str, commit: str) -> dict:
         "changed_files": changed,
         "evidence": evidence,
         "evidence_ids": list(evidence.keys()),
-        # Primary evidence should drive generation to reflect newly added logic.
         "primary_evidence_ids": changed_evidence_ids if changed_evidence_ids else unchanged_evidence_ids[:30],
     }
 
