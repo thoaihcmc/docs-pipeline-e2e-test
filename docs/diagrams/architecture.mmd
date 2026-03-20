@@ -2,5 +2,7 @@
   graph TD;  
     A[User CLI/GUI] -->|Requests| B[Calculator Logic];  
     B -->|Fetches calculated results| C[User Output];  
-    C -->|Displays results| A;
+    C -->|Displays results| A;  
+    A -->|Requests| D[Calendar Module];  
+    D -->|Displays today's date| C;
 ```
