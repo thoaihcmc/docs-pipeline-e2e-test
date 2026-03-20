@@ -22,5 +22,13 @@ This document describes the business logic and interactions designed for efficie
 
     Evidence Path: "docs/bdd.md"
 
+### Calculator Operations  
+1. User selects an operation (add, sub, etc.).  
+2. User inputs numbers needed for the operation.  
+3. System validates inputs and performs the operation.  
+4. The result is displayed to the user in the CLI or GUI.  
+
+    Evidence Path: "calculator.py"
+
 ## Conclusion  
 This BDD provides guidance on the business rules that should govern application functionalities and user interactions.

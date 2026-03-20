@@ -1,7 +1,6 @@
 ```mermaid
   graph TD;  
-    A[User Frontend] -->|Requests| B[API Gateway];  
-    B -->|Fetches data| C[Database];  
-    C -->|Returns data| B;  
-    B -->|Sends data| A;
+    A[User CLI/GUI] -->|Requests| B[Calculator Logic];  
+    B -->|Fetches calculated results| C[User Output];  
+    C -->|Displays results| A;
 ```
