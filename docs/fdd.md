@@ -28,7 +28,7 @@ The purpose of this FDD is to detail the functionalities that will be implemente
   1. User fills out the registration form.  
   2. User submits the form.  
   3. System validates the input and creates the account.  
-
+   
     Evidence Path: "requirements.txt"
 
 ## Conclusion  
