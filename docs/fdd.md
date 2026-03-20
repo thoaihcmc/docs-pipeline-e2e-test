@@ -40,7 +40,7 @@ The purpose of this FDD is to detail the functionalities that will be implemente
   1. User fills out the registration form.  
   2. User submits the form.  
   3. System validates the input and creates the account.  
-     
+   
    Evidence Path: "requirements.txt"
 
 ### Perform Calculator Operation  
@@ -51,7 +51,7 @@ The purpose of this FDD is to detail the functionalities that will be implemente
   1. User selects operation (e.g., add, sub).  
   2. User inputs the numbers.  
   3. System calculates and returns the result, displaying it in the console or GUI.  
-     
+   
     Evidence Path: "calculator.py"
 
 ### Display Today's Date  
