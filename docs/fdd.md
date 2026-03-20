@@ -27,6 +27,10 @@ The purpose of this FDD is to detail the functionalities that will be implemente
    - The calculator must support both CLI and GUI modes. The GUI should allow operations selection and display results accordingly.  
    - Evidence Path: "calculator.py"
 
+6. **Calendar Module**  
+   - The calendar module allows users to display today's date via CLI or GUI.  
+   - Evidence Path: "calendar_module.py"
+
 ## Use Cases  
 ### Create User Account  
 - **Actor**: User  
@@ -36,7 +40,7 @@ The purpose of this FDD is to detail the functionalities that will be implemente
   1. User fills out the registration form.  
   2. User submits the form.  
   3. System validates the input and creates the account.  
-   
+     
    Evidence Path: "requirements.txt"
 
 ### Perform Calculator Operation  
@@ -47,8 +51,19 @@ The purpose of this FDD is to detail the functionalities that will be implemente
   1. User selects operation (e.g., add, sub).  
   2. User inputs the numbers.  
   3. System calculates and returns the result, displaying it in the console or GUI.  
-   
+     
     Evidence Path: "calculator.py"
+
+### Display Today's Date  
+- **Actor**: User  
+- **Precondition**: User has opened the calendar module (CLI or GUI).  
+- **Postcondition**: The current date is displayed to the user.  
+- **Flow**:  
+  1. User selects CLI or GUI mode.  
+  2. System retrieves today's date.  
+  3. System displays the date to the user.  
+   
+   Evidence Path: "calendar_module.py"
 
 ## Conclusion  
 This FDD sets the foundation for the system's construction based on the outlined functional requirements.
