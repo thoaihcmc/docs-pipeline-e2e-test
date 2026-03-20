@@ -39,3 +39,5 @@ This document describes the business logic and interactions designed for efficie
 
 ## Conclusion  
 This BDD provides guidance on the business rules that should govern application functionalities and user interactions.
+
+---

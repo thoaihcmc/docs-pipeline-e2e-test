@@ -30,6 +30,10 @@ The purpose of this FDD is to detail the functionalities that will be implemente
 6. **Calendar Module**  
    - The calendar module allows users to display today's date via CLI or GUI.  
    - Evidence Path: "calendar_module.py"
+   
+7. **Date Display Functionality**  
+   - The calendar module includes functionality to show today's date either in the command line interface or in a graphical interface.  
+   - Evidence Path: "calendar_module.py"
 
 ## Use Cases  
 ### Create User Account  
@@ -66,4 +70,6 @@ The purpose of this FDD is to detail the functionalities that will be implemente
    Evidence Path: "calendar_module.py"
 
 ## Conclusion  
-This FDD sets the foundation for the system's construction based on the outlined functional requirements.
+This FDD sets the foundation for the system's construction based on the outlined functional requirements.  
+
+---
