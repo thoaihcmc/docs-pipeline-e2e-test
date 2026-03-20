@@ -11,7 +11,7 @@ from pathlib import Path
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _SCRIPT_DIR.parent
-for _p in (_REPO_ROOT, str(_SCRIPT_DIR)):
+for _p in (str(_REPO_ROOT), str(_SCRIPT_DIR)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
