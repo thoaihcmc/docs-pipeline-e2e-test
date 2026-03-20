@@ -8,7 +8,7 @@ The architecture of the system is designed in adherence to modern software engin
 - **Backend**: Node.js with Express for managing API requests.
 - **Database**: PostgreSQL for data storage.
 
-    Evidence Path: " scripts/generate_docs.py"
+    Evidence Path: "scripts/generate_docs.py"
 
 ### Component Diagram
 ```mermaid
@@ -31,7 +31,7 @@ databaseEntity
     +String username
     +String password
   }
-``` 
+```
 
 ## Conclusion
 This ADD outlines the fundamental architecture that will support the development and deployment of the system, ensuring durability and performance.
