@@ -55,6 +55,22 @@ def _get_changed_files(repo_path: str, commit: str) -> list[str]:
         return []
 
 
+def _get_changed_files_push_range(repo_path: str, commit: str) -> list[str]:
+    """Best-effort changed files for push runs (includes merge commit range when available)."""
+    try:
+        out = subprocess.run(
+            ["git", "diff", "--name-only", f"{commit}~1", commit],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        files = [f.strip() for f in out.stdout.strip().splitlines() if f.strip()]
+        return files
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return []
+
+
 def _read_file_snippet(path: Path, max_chars: int = 50000) -> str:
     """Read file content up to max_chars; skip binary."""
     try:
@@ -69,7 +85,7 @@ def _collect_evidence(repo_path: str, commit: str) -> dict:
     if not repo.is_dir():
         return {"error": "repo path is not a directory", "evidence": {}, "changed_files": []}
 
-    changed = _get_changed_files(repo_path, commit)
+    changed = _get_changed_files_push_range(repo_path, commit) or _get_changed_files(repo_path, commit)
 
     evidence = {}
     for pattern in SOURCE_GLOBS + [DOCS_GLOB, DIAGRAMS_GLOB]:

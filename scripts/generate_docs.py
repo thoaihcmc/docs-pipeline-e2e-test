@@ -36,6 +36,8 @@ def _build_system_prompt(manifest: dict) -> str:
         "Your output must be based ONLY on the repository evidence provided. Do not invent components, functions, classes, states, entities, or relationships that are not supported by the evidence.",
         "Every element you generate must be traceable to at least one evidence path in the manifest (evidence_ids).",
         "Focus FIRST on primary_evidence_ids (changed product code). Do not use CI/pipeline files as the main architecture source.",
+        "If primary_evidence_ids is non-empty, architecture/business/functional details MUST be derived from those files first.",
+        "Prefer concrete module/function/class names from changed files (for example calculator functions), not generic placeholders.",
         "If evidence is insufficient for a section, explicitly say 'Not enough repository evidence' for that section instead of inventing details.",
         f"Commit: {commit}. Changed files in this commit: " + (", ".join(changed) if changed else "none"),
         "",
@@ -47,9 +49,15 @@ def _build_system_prompt(manifest: dict) -> str:
         "",
         "Evidence content snippets (key = path):",
     ]
-    # Put primary evidence first so model sees changed logic before everything else.
-    ordered_paths = primary_evidence_ids + [p for p in evidence.keys() if p not in set(primary_evidence_ids)]
-    for path in ordered_paths[:200]:  # cap size for context
+    # Put primary evidence first. If available, heavily bias prompt to changed files.
+    primary_set = set(primary_evidence_ids)
+    secondary_paths = [p for p in evidence.keys() if p not in primary_set]
+    if primary_evidence_ids:
+        ordered_paths = list(primary_evidence_ids) + secondary_paths[:20]
+    else:
+        ordered_paths = secondary_paths[:120]
+
+    for path in ordered_paths:
         data = evidence.get(path, {})
         snippet = (data.get("content_snippet") or "")[:8000]
         parts.append(f"\n--- {path} ---\n{snippet}")
@@ -68,7 +76,8 @@ def _call_openai(manifest: dict) -> dict:
     user = (
         "Generate the full documentation output: FDD, BDD, ADD in Markdown, and four Mermaid diagrams "
         "(architecture, state-machine, class, database-entity). Use only evidence from the manifest. "
-        "Populate traceability so every section and every diagram node/edge/entity references an evidence_path from the manifest."
+        "Populate traceability so every section and every diagram node/edge/entity references an evidence_path from the manifest. "
+        "If there are changed files in primary_evidence_ids, explicitly reflect their logic in FDD/BDD/ADD and diagram nodes/edges."
     )
 
     def _request(messages: list[dict]) -> dict:
