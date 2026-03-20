@@ -73,11 +73,19 @@ def _call_openai(manifest: dict) -> dict:
 
     client = OpenAI()
     system = _build_system_prompt(manifest)
+    primary_python_modules = [
+        p
+        for p in manifest.get("primary_evidence_ids", [])
+        if p.endswith(".py") and not p.endswith("__init__.py") and "/test" not in p and not p.startswith("test")
+    ]
+
     user = (
         "Generate the full documentation output: FDD, BDD, ADD in Markdown, and four Mermaid diagrams "
         "(architecture, state-machine, class, database-entity). Use only evidence from the manifest. "
         "Populate traceability so every section and every diagram node/edge/entity references an evidence_path from the manifest. "
-        "If there are changed files in primary_evidence_ids, explicitly reflect their logic in FDD/BDD/ADD and diagram nodes/edges."
+        "If there are changed files in primary_evidence_ids, explicitly reflect their logic in FDD/BDD/ADD and diagram nodes/edges. "
+        "For changed Python modules, include each one explicitly in the documentation (or state not enough evidence for that module), "
+        "and include traceability entries for each changed module."
     )
 
     def _request(messages: list[dict]) -> dict:
@@ -99,6 +107,12 @@ def _call_openai(manifest: dict) -> dict:
                 invalid.append(p)
         return sorted(set(invalid))
 
+    def _uncovered_primary_modules(data: dict, required_modules: list[str]) -> list[str]:
+        if not required_modules:
+            return []
+        covered = {t.get("evidence_path") for t in data.get("traceability", []) if t.get("evidence_path")}
+        return sorted([m for m in required_modules if m not in covered])
+
     valid_ids = set(manifest.get("evidence_ids", []))
     data = _request(
         [
@@ -109,6 +123,7 @@ def _call_openai(manifest: dict) -> dict:
 
     # Retry once if traceability paths are outside manifest evidence IDs.
     invalid = _invalid_traceability_paths(data, valid_ids)
+    missing_module_coverage = _uncovered_primary_modules(data, primary_python_modules)
     if invalid:
         repair_user = (
             "Your previous output used traceability evidence_path values that are not in the manifest.\n"
@@ -127,10 +142,38 @@ def _call_openai(manifest: dict) -> dict:
             ]
         )
         invalid = _invalid_traceability_paths(data, valid_ids)
+        missing_module_coverage = _uncovered_primary_modules(data, primary_python_modules)
         if invalid:
             raise SystemExit(
                 "Traceability repair failed; still invalid evidence_path values: "
                 + ", ".join(invalid[:10])
+            )
+    if missing_module_coverage:
+        coverage_user = (
+            "Your previous output did not include traceability coverage for all changed Python modules.\n"
+            "Return the full schema again, preserving content where possible, and ensure each module below appears "
+            "in traceability.evidence_path at least once and is reflected in docs/diagrams.\n"
+            "Modules missing coverage:\n"
+            + json.dumps(missing_module_coverage, indent=2)
+        )
+        data = _request(
+            [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+                {"role": "user", "content": coverage_user},
+            ]
+        )
+        invalid = _invalid_traceability_paths(data, valid_ids)
+        missing_module_coverage = _uncovered_primary_modules(data, primary_python_modules)
+        if invalid:
+            raise SystemExit(
+                "Coverage repair produced invalid traceability evidence_path values: "
+                + ", ".join(invalid[:10])
+            )
+        if missing_module_coverage:
+            raise SystemExit(
+                "Coverage repair failed; missing changed module coverage for: "
+                + ", ".join(missing_module_coverage[:10])
             )
 
     return data
