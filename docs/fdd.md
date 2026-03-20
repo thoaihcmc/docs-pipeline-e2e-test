@@ -47,7 +47,7 @@ The purpose of this FDD is to detail the functionalities that will be implemente
   1. User selects operation (e.g., add, sub).  
   2. User inputs the numbers.  
   3. System calculates and returns the result, displaying it in the console or GUI.  
-
+   
     Evidence Path: "calculator.py"
 
 ## Conclusion  
