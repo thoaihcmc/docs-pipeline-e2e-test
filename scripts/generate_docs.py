@@ -109,18 +109,33 @@ def _call_openai(manifest: dict, repo_path: str) -> dict:
     existing_docs = _read_existing_docs(repo_path)
     system = _build_system_prompt(manifest, existing_docs)
 
-    # All changed product files that are in evidence, regardless of language.
-    NON_PRODUCT_NAMES = {"__init__.py", "requirements.txt", "package.json", "go.mod", "Cargo.toml", "pyproject.toml"}
+    # ALL product source files in the repo (not just changed ones).
+    NON_PRODUCT_NAMES = {
+        "__init__.py", "requirements.txt", "package.json", "go.mod",
+        "Cargo.toml", "pyproject.toml", "setup.py", "setup.cfg",
+    }
+    NON_PRODUCT_PREFIXES = ("docs/", ".github/", ".ci-build/", "scripts/", ".tmp/")
+    all_product_files = [
+        p for p in manifest.get("evidence_ids", [])
+        if p.split("/")[-1] not in NON_PRODUCT_NAMES
+        and not any(p.startswith(prefix) for prefix in NON_PRODUCT_PREFIXES)
+    ]
     primary_modules = [
         p for p in manifest.get("primary_evidence_ids", [])
         if p.split("/")[-1] not in NON_PRODUCT_NAMES
     ]
 
     module_list_hint = ""
-    if primary_modules:
+    if all_product_files:
         module_list_hint = (
-            "\n\nThe following changed files MUST each appear in at least one traceability entry "
-            "and be reflected in the documentation and diagrams:\n"
+            "\n\nThe following source files exist in the repository and MUST ALL be reflected "
+            "in the documentation and diagrams (each must appear in at least one traceability entry):\n"
+            + "\n".join(f"  - {m}" for m in all_product_files)
+        )
+    if primary_modules:
+        module_list_hint += (
+            "\n\nThe following files were CHANGED in this commit and need special attention "
+            "(ensure they are up to date in all outputs):\n"
             + "\n".join(f"  - {m}" for m in primary_modules)
         )
 
@@ -188,9 +203,10 @@ def _call_openai(manifest: dict, repo_path: str) -> dict:
         ]
     )
 
-    # Retry once if traceability paths are outside manifest evidence IDs.
+    # Retry once if traceability paths are outside manifest evidence IDs
+    # or any product file is missing from coverage.
     invalid = _invalid_traceability_paths(data, valid_ids)
-    missing = _uncovered_modules(data, primary_modules)
+    missing = _uncovered_modules(data, all_product_files)
     if invalid or missing:
         repair_parts = []
         if invalid:
@@ -204,7 +220,7 @@ def _call_openai(manifest: dict, repo_path: str) -> dict:
             )
         if missing:
             repair_parts.append(
-                "Your previous output did not include traceability coverage for all changed files.\n"
+                "Your previous output did not include traceability coverage for all product source files.\n"
                 "Ensure each file below appears in traceability.evidence_path at least once "
                 "and is reflected in docs/diagrams:\n"
                 + json.dumps(missing, indent=2)
@@ -217,7 +233,7 @@ def _call_openai(manifest: dict, repo_path: str) -> dict:
             ]
         )
         invalid = _invalid_traceability_paths(data, valid_ids)
-        missing = _uncovered_modules(data, primary_modules)
+        missing = _uncovered_modules(data, all_product_files)
         if invalid:
             raise SystemExit(
                 "Traceability repair failed; invalid evidence_path values: "
