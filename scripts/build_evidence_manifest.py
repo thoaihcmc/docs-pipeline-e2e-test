@@ -33,6 +33,11 @@ SOURCE_GLOBS = [
 DOCS_GLOB = "docs/**/*.md"
 DIAGRAMS_GLOB = "docs/diagrams/**/*.mmd"
 IGNORE_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build", ".tmp"}
+EXCLUDE_EVIDENCE_PREFIXES = (
+    ".github/",
+    ".ci-build/",
+    "scripts/",
+)
 
 
 def _get_changed_files(repo_path: str, commit: str) -> list[str]:
@@ -78,11 +83,17 @@ def _collect_evidence(repo_path: str, commit: str) -> dict:
             key = rel
             if key in evidence:
                 continue
+            # Exclude pipeline implementation files; they bias output away from product logic.
+            if key.startswith(EXCLUDE_EVIDENCE_PREFIXES):
+                continue
             evidence[key] = {
                 "path": key,
                 "content_snippet": _read_file_snippet(p),
                 "changed": rel in changed,
             }
+
+    changed_evidence_ids = [f for f in changed if f in evidence]
+    unchanged_evidence_ids = [f for f in evidence.keys() if f not in set(changed_evidence_ids)]
 
     return {
         "commit": commit,
@@ -90,6 +101,8 @@ def _collect_evidence(repo_path: str, commit: str) -> dict:
         "changed_files": changed,
         "evidence": evidence,
         "evidence_ids": list(evidence.keys()),
+        # Primary evidence should drive generation to reflect newly added logic.
+        "primary_evidence_ids": changed_evidence_ids if changed_evidence_ids else unchanged_evidence_ids[:30],
     }
 
 

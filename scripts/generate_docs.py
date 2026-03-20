@@ -26,6 +26,7 @@ def _load_manifest(manifest_path: str) -> dict:
 
 def _build_system_prompt(manifest: dict) -> str:
     evidence_ids = manifest.get("evidence_ids", [])
+    primary_evidence_ids = manifest.get("primary_evidence_ids", [])
     evidence = manifest.get("evidence", {})
     commit = manifest.get("commit", "unknown")
     changed = manifest.get("changed_files", [])
@@ -34,14 +35,22 @@ def _build_system_prompt(manifest: dict) -> str:
         "You are a solution architect generating technical design documentation and diagrams.",
         "Your output must be based ONLY on the repository evidence provided. Do not invent components, functions, classes, states, entities, or relationships that are not supported by the evidence.",
         "Every element you generate must be traceable to at least one evidence path in the manifest (evidence_ids).",
+        "Focus FIRST on primary_evidence_ids (changed product code). Do not use CI/pipeline files as the main architecture source.",
+        "If evidence is insufficient for a section, explicitly say 'Not enough repository evidence' for that section instead of inventing details.",
         f"Commit: {commit}. Changed files in this commit: " + (", ".join(changed) if changed else "none"),
+        "",
+        "Primary evidence paths (prioritize these):",
+        json.dumps(primary_evidence_ids, indent=2),
         "",
         "Evidence paths (use these exact strings in traceability.evidence_path):",
         json.dumps(evidence_ids, indent=2),
         "",
         "Evidence content snippets (key = path):",
     ]
-    for path, data in list(evidence.items())[:200]:  # cap size for context
+    # Put primary evidence first so model sees changed logic before everything else.
+    ordered_paths = primary_evidence_ids + [p for p in evidence.keys() if p not in set(primary_evidence_ids)]
+    for path in ordered_paths[:200]:  # cap size for context
+        data = evidence.get(path, {})
         snippet = (data.get("content_snippet") or "")[:8000]
         parts.append(f"\n--- {path} ---\n{snippet}")
 
