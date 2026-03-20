@@ -30,6 +30,19 @@ OPS = {
 UNARY_OPS = {"sqrt"}
 
 
+def format_result(value: float, *, max_decimals: int = 10) -> str:
+    """Format a numeric result for display (trim trailing zeros / whole numbers)."""
+    if value != value:  # NaN
+        return "nan"
+    if value in (float("inf"), float("-inf")):
+        return str(value)
+    rounded = round(value, max_decimals)
+    if rounded == int(rounded):
+        return str(int(rounded))
+    text = f"{rounded:.{max_decimals}f}".rstrip("0").rstrip(".")
+    return text or "0"
+
+
 def calculate(op: str, a: float, b: float = 0.0) -> float:
     """Run one calculator operation with basic validation."""
     if op not in OPS:
@@ -66,8 +79,13 @@ def run_interactive() -> None:
             if op not in UNARY_OPS:
                 b = float(input("Second number: ").strip())
             result = calculate(op, a, b)
-            print(f"Result: {result}")
-            expr = f"{op}({a}) = {result}" if op in UNARY_OPS else f"{a} {op} {b} = {result}"
+            out = format_result(result)
+            print(f"Result: {out}")
+            expr = (
+                f"{op}({a}) = {out}"
+                if op in UNARY_OPS
+                else f"{a} {op} {b} = {out}"
+            )
             history.append(expr)
             if len(history) > 5:
                 history.pop(0)
@@ -109,7 +127,7 @@ def run_gui() -> None:
     second_entry.grid(row=5, column=0, sticky="ew", pady=(0, 10))
 
     result_var = tk.StringVar(value="Result: -")
-    ttk.Label(main, textvariable=result_var).grid(row=8, column=0, sticky="w", pady=(8, 0))
+    ttk.Label(main, textvariable=result_var).grid(row=7, column=0, sticky="w", pady=(8, 0))
 
     ttk.Label(main, text="History").grid(row=9, column=0, sticky="w", pady=(10, 4))
     history_list = tk.Listbox(main, height=6, width=36)
@@ -123,8 +141,13 @@ def run_gui() -> None:
             if op not in UNARY_OPS:
                 b = float(second_var.get().strip())
             result = calculate(op, a, b)
-            result_var.set(f"Result: {result}")
-            expr = f"{op}({a}) = {result}" if op in UNARY_OPS else f"{a} {op} {b} = {result}"
+            out = format_result(result)
+            result_var.set(f"Result: {out}")
+            expr = (
+                f"{op}({a}) = {out}"
+                if op in UNARY_OPS
+                else f"{a} {op} {b} = {out}"
+            )
             history_list.insert(0, expr)
             if history_list.size() > 10:
                 history_list.delete(10, tk.END)
@@ -158,6 +181,19 @@ def run_gui() -> None:
     )
     ttk.Button(buttons, text="Clear", command=on_clear).grid(
         row=0, column=1, sticky="ew", padx=(4, 0)
+    )
+
+    def on_copy_result() -> None:
+        text = result_var.get()
+        if text.startswith("Result: "):
+            text = text[len("Result: ") :]
+        if text and text != "-":
+            root.clipboard_clear()
+            root.clipboard_append(text)
+            root.update_idletasks()
+
+    ttk.Button(main, text="Copy result", command=on_copy_result).grid(
+        row=8, column=0, sticky="ew", pady=(6, 0)
     )
 
     first_entry.focus_set()
@@ -198,7 +234,7 @@ def main() -> None:
         parser.error(str(exc))
         return
 
-    print(result)
+    print(format_result(result))
 
 
 if __name__ == "__main__":

@@ -9,6 +9,10 @@ on:
   # Automatic: runs whenever someone pushes to the remote repo on these branches
   push:
     branches: [main, master]
+    # Prevent self-trigger loop: docs-only commits (from auto-generated PR merges)
+    # should not trigger another docs generation run.
+    paths-ignore:
+      - "docs/**"
   # Optional: manual re-run from GitHub Actions tab
   workflow_dispatch:
 
