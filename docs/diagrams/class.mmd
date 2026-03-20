@@ -1,13 +1,19 @@
 ```mermaid  
   classDiagram  
-    class User {  
-      +String name  
-      +String email  
-      +void login()  
-      +void logout()  
+    class Calculator {  
+      +void calculate(op: str, a: float, b: float)  
+      +void run_interactive()  
+      +void run_gui()  
     }  
-    class Report {  
-      +String reportData  
+    class OPS {  
+      +add()  
+      +sub()  
+      +mul()  
+      +div()  
+      +pow()  
+      +mod()  
+      +sqrt()  
+      +pct()  
     }  
-    User --> Report
+    Calculator --> OPS
 ```
