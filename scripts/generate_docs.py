@@ -71,20 +71,60 @@ def _call_openai(manifest: dict) -> dict:
         "Populate traceability so every section and every diagram node/edge/entity references an evidence_path from the manifest."
     )
 
-    # Structured Outputs: response_format with json_schema
-    resp = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
+    def _request(messages: list[dict]) -> dict:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            response_format=DOCUMENTATION_OUTPUT_SCHEMA,
+        )
+        choice = resp.choices[0]
+        if getattr(choice, "refusal", None):
+            raise SystemExit("Model refused the request")
+        return json.loads(choice.message.content)
+
+    def _invalid_traceability_paths(data: dict, valid_ids: set[str]) -> list[str]:
+        invalid = []
+        for t in data.get("traceability", []):
+            p = t.get("evidence_path")
+            if p and p not in valid_ids:
+                invalid.append(p)
+        return sorted(set(invalid))
+
+    valid_ids = set(manifest.get("evidence_ids", []))
+    data = _request(
+        [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
-        ],
-        response_format=DOCUMENTATION_OUTPUT_SCHEMA,
+        ]
     )
-    choice = resp.choices[0]
-    if getattr(choice, "refusal", None):
-        raise SystemExit("Model refused the request")
-    text = choice.message.content
-    return json.loads(text)
+
+    # Retry once if traceability paths are outside manifest evidence IDs.
+    invalid = _invalid_traceability_paths(data, valid_ids)
+    if invalid:
+        repair_user = (
+            "Your previous output used traceability evidence_path values that are not in the manifest.\n"
+            "Return the full schema again, preserving content where possible, but fix ALL traceability.evidence_path "
+            "to use ONLY values from evidence_ids.\n"
+            "Invalid evidence paths were:\n"
+            + json.dumps(invalid, indent=2)
+            + "\nAllowed evidence_ids are:\n"
+            + json.dumps(manifest.get("evidence_ids", []), indent=2)
+        )
+        data = _request(
+            [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+                {"role": "user", "content": repair_user},
+            ]
+        )
+        invalid = _invalid_traceability_paths(data, valid_ids)
+        if invalid:
+            raise SystemExit(
+                "Traceability repair failed; still invalid evidence_path values: "
+                + ", ".join(invalid[:10])
+            )
+
+    return data
 
 
 def _write_outputs(repo_path: str, data: dict, commit: str) -> None:
