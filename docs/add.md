@@ -5,9 +5,7 @@ The architecture of the system is designed in adherence to modern software engin
 
 ### Architecture Overview  
 - **Frontend**: Command Line Interface (CLI) and Graphical User Interface (GUI) are available for user interaction with the calculator functionalities.  
-- **Backend**: Python script that processes calculator operations and manages inputs.
-  
-   Evidence Path: "calculator.py"
+- **Backend**: Python scripts (`calculator.py`, `calendar_module.py`) that process calculator operations and manage inputs.
 
 ### Component Diagram  
 ```mermaid
@@ -18,12 +16,18 @@ classDiagram
     +void run_gui()  
     +static get_today_date()  
   }  
+  class CalendarModule {  
+    +void show_cli()  
+    +void show_gui()  
+    +static get_today_date()  
+  }  
   class Operation {  
     +String type  
     +float operand1  
     +float operand2  
   }  
   Calculator --> Operation
+  Calculator --> CalendarModule
 ```  
 
 ### Database Schema  
@@ -31,5 +35,3 @@ No database evidence.
 
 ## Conclusion  
 This ADD outlines the fundamental architecture that will support the development and deployment of the system, ensuring durability and performance.
-
----
