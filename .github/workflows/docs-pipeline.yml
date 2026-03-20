@@ -1,0 +1,164 @@
+# Documentation pipeline: generate/refresh FDD, BDD, ADD and diagrams from repo changes.
+# Runs automatically on every push to main/master (no manual run required).
+# Optional: workflow_dispatch for manual re-runs from the Actions tab.
+# Outputs go to docs/ and docs/diagrams/; PR is opened for review (no direct push to main).
+
+name: Docs Pipeline
+
+on:
+  # Automatic: runs whenever someone pushes to the remote repo on these branches
+  push:
+    branches: [main, master]
+  # Optional: manual re-run from GitHub Actions tab
+  workflow_dispatch:
+
+env:
+  DOCS_BRANCH: docs/auto-generated
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  build-evidence:
+    name: Build evidence manifest
+    runs-on: ubuntu-latest
+    outputs:
+      manifest_path: ${{ steps.manifest.outputs.path }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build evidence manifest
+        id: manifest
+        run: |
+          python scripts/build_evidence_manifest.py \
+            --repo . \
+            --commit "${{ github.sha }}" \
+            --output manifest.json
+          echo "path=manifest.json" >> $GITHUB_OUTPUT
+
+      - name: Upload evidence manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-manifest
+          path: manifest.json
+
+  generate-docs:
+    name: Generate documentation and diagrams
+    runs-on: ubuntu-latest
+    needs: build-evidence
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download evidence manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: evidence-manifest
+
+      - name: Prepare manifest path
+        run: |
+          mkdir -p .tmp
+          mv manifest.json .tmp/manifest.json
+
+      - name: Generate FDD, BDD, ADD and diagrams
+        id: generate
+        run: |
+          python scripts/generate_docs.py \
+            --manifest .tmp/manifest.json \
+            --repo . \
+            --commit "${{ github.sha }}"
+
+      - name: Upload generated docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-docs
+          path: |
+            docs/
+            .tmp/generation_output.json
+            .tmp/manifest.json
+
+  validate:
+    name: Validate outputs
+    runs-on: ubuntu-latest
+    needs: generate-docs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download generated docs
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-docs
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run validation
+        run: |
+          python scripts/validate_outputs.py \
+            --repo . \
+            --generation-output .tmp/generation_output.json \
+            --manifest .tmp/manifest.json \
+            --require-traceability
+        env:
+          FAIL_ON_UNTRACEABLE: "1"
+
+  open-pr:
+    name: Open docs PR
+    runs-on: ubuntu-latest
+    needs: [build-evidence, generate-docs, validate]
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Download generated docs
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-docs
+
+      - name: Restore generated docs into repo
+        run: |
+          mkdir -p docs/diagrams
+          cp -R docs/. docs/ 2>/dev/null || true
+          ls -la docs/ docs/diagrams/
+
+      - name: Create docs branch and open PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ env.DOCS_BRANCH }}
+          add-paths: |
+            docs/
+          commit-message: "docs: auto-generate FDD, BDD, ADD and diagrams for ${{ github.sha }}"
+          title: "Docs: Auto-generated documentation and diagrams"
+          body: |
+            Auto-generated from commit `${{ github.sha }}`.
+            - FDD, BDD, ADD in `docs/`
+            - Architecture, State Machine, Class, Database Entity diagrams in `docs/diagrams/`
+            Please review and edit before merging.
+          labels: documentation
