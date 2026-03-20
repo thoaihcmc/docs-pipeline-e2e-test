@@ -9,11 +9,11 @@ The purpose of this FDD is to detail the functionalities that will be implemente
 ### Requirements  
 1. **User Authentication**  
    - Users must be able to create accounts and log in securely.  
-   - Evidence Path: "scripts/validate_outputs.py"
+   - Evidence Path: "requirements.txt"
 
 2. **Data Management**  
    - The system should allow users to manage data effectively, including CRUD operations.  
-   - Evidence Path: "scripts/generate_docs.py"
+   - Evidence Path: "config.py"
 
 3. **Reporting**  
    - Users must have the capability to generate reports based on the data inputted.  
