@@ -13,38 +13,21 @@ The architecture of the system is designed in adherence to modern software engin
 - `calendar_module.py`: Provides functionality to display today's date.  
 - `auth_module.py`: Manages user authentication and session management.  
 - `config.py`: Holds configuration settings, paths, and document requirements.  
-
-### Component Diagram  
-```mermaid
-classDiagram  
-  class AiNewsModule {  
-    +void fetch_news(query: str, count: int)  
-    +void show_cli()  
-    +void show_gui()  
-  }  
-  class Calculator {  
-    +void calculate(operation: str, a: float, b: float)  
-    +void run_interactive()  
-    +void run_gui()  
-  }  
-  class CalendarModule {  
-    +void show_cli()  
-    +void show_gui()  
-  }  
-  class AuthModule {  
-    +void require_auth(gui: bool)  
-  }  
-  class Config {  
-    +void get_approved_docs_path(filename: str)  
-  }  
-  AiNewsModule --> Config  
-  Calculator --> Config  
-  CalendarModule --> Config  
-  AuthModule --> Config  
-```  
+- `test`: Validates the performance and functionality of the above modules.  
 
 ### Database Schema  
-No database evidence.
+- `users`:  
+  - **id** INTEGER PRIMARY KEY AUTOINCREMENT  
+  - **username** TEXT NOT NULL UNIQUE COLLATE NOCASE  
+  - **password_hash** TEXT NOT NULL  
+  - **salt** TEXT NOT NULL  
+  - **created_at** TEXT NOT NULL DEFAULT (datetime('now'))  
+- `sessions`:  
+  - **id** INTEGER PRIMARY KEY AUTOINCREMENT  
+  - **user_id** INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE  
+  - **token** TEXT NOT NULL UNIQUE  
+  - **created_at** TEXT NOT NULL DEFAULT (datetime('now'))  
+  - **expires_at** TEXT NOT NULL  
 
 ## Conclusion  
 This ADD outlines the fundamental architecture that will support the development and deployment of the system, ensuring durability and performance.

@@ -37,5 +37,11 @@ This document describes the business logic and interactions designed for efficie
    
    Evidence Path: "auth_module.py"
 
+### User Testing  
+1. The system runs predefined test cases and validations.  
+2. Results and logs are captured for all functionalities to ensure proper interaction and output.  
+   
+   Evidence Path: "test"
+
 ## Conclusion  
 This BDD provides guidance on the business rules that should govern application functionalities and user interactions.

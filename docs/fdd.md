@@ -35,6 +35,10 @@ The purpose of this FDD is to detail the functionalities that will be implemente
    - The configuration module provides settings for approved paths, document requirements, and function to access those paths.  
    - Evidence Path: "config.py"
 
+8. **User Testing Module**  
+   - A testing module exists to validate functionality for all components in the previous files.  
+   - Evidence Path: "test"
+
 ## Use Cases  
 ### Fetch AI News  
 - **Actor**: User  
@@ -78,6 +82,16 @@ The purpose of this FDD is to detail the functionalities that will be implemente
   3. System validates user credentials and provides access.  
    
    Evidence Path: "auth_module.py"
+
+### User Testing  
+- **Actor**: Developer/Tester  
+- **Precondition**: The testing module is executed.  
+- **Postcondition**: Results of the test cases are displayed to verify functionality.  
+- **Flow**:  
+  1. Test cases are executed.  
+  2. Results are logged and displayed.  
+   
+   Evidence Path: "test"
 
 ## Conclusion  
 This FDD sets the foundation for the system's construction based on the outlined functional requirements.
