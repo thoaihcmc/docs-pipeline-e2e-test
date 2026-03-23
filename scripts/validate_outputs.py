@@ -62,6 +62,9 @@ def validate_paths_only_approved(paths_written: list[str]) -> list[str]:
     return disallowed
 
 
+_OPTIONAL_EVIDENCE_TYPES = {"database_entity", "database_relation"}
+
+
 def validate_traceability(
     generation_output: dict,
     evidence_ids: list[str],
@@ -77,6 +80,9 @@ def validate_traceability(
         etype = t.get("element_type")
         path = t.get("evidence_path")
         if not path:
+            if etype in _OPTIONAL_EVIDENCE_TYPES:
+                print(f"  WARN: no evidence_path for optional element_id={eid} ({etype}) — skipping", file=sys.stderr)
+                continue
             errors.append(f"Missing evidence_path for element_id={eid}")
             continue
         if require_traceability and path not in evidence_set:

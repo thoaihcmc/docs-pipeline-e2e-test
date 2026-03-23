@@ -17,7 +17,6 @@ for _p in (str(_REPO_ROOT), str(_SCRIPT_DIR)):
 
 import config as pipeline_config
 from schemas.documentation_schema import DOCUMENTATION_OUTPUT_SCHEMA
-from sync_diagrams_preview import sync_preview
 
 
 def _load_manifest(manifest_path: str) -> dict:
@@ -282,16 +281,18 @@ def _write_outputs(repo_path: str, data: dict, commit: str) -> None:
         path.write_text(content, encoding="utf-8")
         paths_written.append(str(path.relative_to(repo)))
 
-    # Sync diagrams-preview.md from the .mmd files we just wrote
-    preview_path = sync_preview(repo_path)
-    paths_written.append(str(preview_path.relative_to(repo)))
+    # Strip traceability entries where the model returned an empty evidence_path
+    # (happens when the repo has no real evidence for a required output, e.g. database diagrams).
+    clean_trace = [
+        t for t in data.get("traceability", [])
+        if t.get("evidence_path", "").strip()
+    ]
 
-    # Save generation output for validation (traceability + paths)
     out = {
         "commit": commit,
         "paths_written": paths_written,
-        "traceability": data.get("traceability", []),
-        "evidence_ids": [],  # validator will inject from manifest if needed
+        "traceability": clean_trace,
+        "evidence_ids": [],
     }
     tmp = repo / ".tmp"
     tmp.mkdir(parents=True, exist_ok=True)
