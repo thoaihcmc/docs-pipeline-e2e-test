@@ -1,7 +1,12 @@
 ```mermaid  
 stateDiagram-v2  
     [*] --> ReadyForInput  
+    ReadyForInput --> FetchingAIContent  
+    FetchingAIContent --> DisplayingNews  
+    DisplayingNews --> ReadyForInput  
     ReadyForInput --> Calculating  
     Calculating --> DisplayingResult  
     DisplayingResult --> ReadyForInput  
+    ReadyForInput --> DisplayingDate  
+    DisplayingDate --> ReadyForInput  
 ```
