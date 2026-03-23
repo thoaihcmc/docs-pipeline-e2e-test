@@ -27,9 +27,13 @@ The purpose of this FDD is to detail the functionalities that will be implemente
    - The calendar module includes functionality to show today's date either in the command line interface or in a graphical interface.  
    - Evidence Path: "calendar_module.py"
 
-6. **Test Module**  
-   - The test module verifies the integrity and correctness of the functionalities through various test cases.  
-   - Evidence Path: "test"
+6. **Authentication Module**  
+   - The authentication module manages user registration, login, and session management. It must ensure user data integrity and security through hashing and storage in the SQLite database.  
+   - Evidence Path: "auth_module.py"
+
+7. **Configuration Handling**  
+   - The configuration module provides settings for approved paths, document requirements, and function to access those paths.  
+   - Evidence Path: "config.py"
 
 ## Use Cases  
 ### Fetch AI News  
@@ -64,16 +68,16 @@ The purpose of this FDD is to detail the functionalities that will be implemente
    
    Evidence Path: "calendar_module.py"
 
-### Run Tests  
-- **Actor**: Developer  
-- **Precondition**: Developer has the test module set up.  
-- **Postcondition**: The test results are displayed showing the outcomes of the tests.  
+### User Authentication  
+- **Actor**: User  
+- **Precondition**: User must be logged in to access certain modules.  
+- **Postcondition**: The user session is validated, and access is granted if authenticated.  
 - **Flow**:  
-  1. Developer runs the test module.  
-  2. System executes various test cases against different functionalities.  
-  3. The results of the tests are displayed for review.  
+  1. System checks for an active session.  
+  2. If no session exists, the user is prompted to log in or register.  
+  3. System validates user credentials and provides access.  
    
-   Evidence Path: "test"
+   Evidence Path: "auth_module.py"
 
 ## Conclusion  
 This FDD sets the foundation for the system's construction based on the outlined functional requirements.
