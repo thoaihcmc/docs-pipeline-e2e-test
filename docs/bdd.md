@@ -11,7 +11,7 @@ This document describes the business logic and interactions designed for efficie
 ### Fetch AI News  
 1. User selects to fetch the latest AI news, optionally providing a query and count.  
 2. System fetches the news articles from Google News RSS.  
-3. The articles are displayed in either CLI or GUI format.  
+3. The articles are displayed in either CLI or GUI format.   
    
    Evidence Path: "ai_news_module.py"
 
@@ -29,6 +29,13 @@ This document describes the business logic and interactions designed for efficie
 3. The date is displayed to the user.   
    
    Evidence Path: "calendar_module.py"
+
+### Test Functionalities  
+1. Developer prepares test cases for each module.  
+2. Test module executes the cases and captures results.  
+3. Results are presented for validation.  
+   
+   Evidence Path: "test"
 
 ## Conclusion  
 This BDD provides guidance on the business rules that should govern application functionalities and user interactions.

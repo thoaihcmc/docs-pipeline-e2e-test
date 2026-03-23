@@ -14,8 +14,14 @@ classDiagram
       +void show_cli()  
       +void show_gui()  
     }  
+    class AuthModule {  
+      +void require_auth(gui: bool)  
+    }  
     class Config {  
       +void get_approved_docs_path(filename: str)  
+    }  
+    class Test {  
+      +void run_tests()  
     }  
     class OPS {  
       +add()  
@@ -31,4 +37,9 @@ classDiagram
     AiNewsModule --> Config  
     Calculator --> Config  
     CalendarModule --> Config  
+    AuthModule --> Config  
+    Test --> AiNewsModule  
+    Test --> Calculator  
+    Test --> CalendarModule  
+    Test --> AuthModule  
 ```
