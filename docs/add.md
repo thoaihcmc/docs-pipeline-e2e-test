@@ -4,8 +4,8 @@
 The architecture of the system is designed in adherence to modern software engineering principles to ensure scalability and robustness.
 
 ### Architecture Overview  
-- **Frontend**: Command Line Interface (CLI) and Graphical User Interface (GUI) are available for user interaction with functionalities: fetching AI news, performing calculations, and displaying today's date.  
-- **Backend**: Python scripts (`ai_news_module.py`, `calculator.py`, `calendar_module.py`, `auth_module.py`, `config.py`, `test`) that process requests and manage inputs.
+- **Frontend**: Command Line Interface (CLI) and Graphical User Interface (GUI) are available for user interaction with functionalities: fetching AI news, performing calculations, displaying today's date, and user authentication.  
+- **Backend**: Python scripts (`ai_news_module.py`, `calculator.py`, `calendar_module.py`, `auth_module.py`, `config.py`) that process requests and manage inputs.
 
 ### Components  
 - `ai_news_module.py`: Responsible for fetching and displaying the latest AI news articles.  
@@ -13,7 +13,6 @@ The architecture of the system is designed in adherence to modern software engin
 - `calendar_module.py`: Provides functionality to display today's date.  
 - `auth_module.py`: Manages user authentication and session management.  
 - `config.py`: Holds configuration settings, paths, and document requirements.  
-- `test`: Contains tests that validate the functionalities of other modules.
 
 ### Component Diagram  
 ```mermaid
@@ -38,17 +37,10 @@ classDiagram
   class Config {  
     +void get_approved_docs_path(filename: str)  
   }  
-  class Test {  
-    +void run_tests()  
-  }  
   AiNewsModule --> Config  
   Calculator --> Config  
   CalendarModule --> Config  
   AuthModule --> Config  
-  Test --> AiNewsModule  
-  Test --> Calculator  
-  Test --> CalendarModule  
-  Test --> AuthModule  
 ```  
 
 ### Database Schema  

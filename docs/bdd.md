@@ -30,12 +30,12 @@ This document describes the business logic and interactions designed for efficie
    
    Evidence Path: "calendar_module.py"
 
-### Test Functionalities  
-1. Developer prepares test cases for each module.  
-2. Test module executes the cases and captures results.  
-3. Results are presented for validation.  
+### User Authentication  
+1. Upon initiating any module requiring user access, the system checks for an authenticated session.  
+2. If the user is not authenticated, they are prompted to log in or register.  
+3. The system creates or validates a session based on user input.   
    
-   Evidence Path: "test"
+   Evidence Path: "auth_module.py"
 
 ## Conclusion  
 This BDD provides guidance on the business rules that should govern application functionalities and user interactions.

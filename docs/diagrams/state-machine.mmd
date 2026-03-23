@@ -9,7 +9,6 @@ stateDiagram-v2
     DisplayingResult --> ReadyForInput  
     ReadyForInput --> DisplayingDate  
     DisplayingDate --> ReadyForInput  
-    ReadyForInput --> RunningTests  
-    RunningTests --> TestResult  
-    TestResult --> ReadyForInput  
+    ReadyForInput --> UserAuthentication  
+    UserAuthentication --> ReadyForInput  
 ```

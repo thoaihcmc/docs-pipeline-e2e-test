@@ -16,12 +16,7 @@ graph TD;
     E -->|Displays results| A;  
     A -->|Requests| F[CalendarModule];  
     F -->|Displays today's date| E;  
-    A -->|Requests| G[AuthModule];  
-    A -->|Runs Tests| H[Test];  
-    H -->|Tests| B;  
-    H -->|Tests| D;  
-    H -->|Tests| F;  
-    H -->|Tests| G;
+    A -->|Requests| G[AuthModule];
 ```
 
 ## State Machine
@@ -37,9 +32,8 @@ stateDiagram-v2
     DisplayingResult --> ReadyForInput  
     ReadyForInput --> DisplayingDate  
     DisplayingDate --> ReadyForInput  
-    ReadyForInput --> RunningTests  
-    RunningTests --> TestResult  
-    TestResult --> ReadyForInput
+    ReadyForInput --> UserAuthentication  
+    UserAuthentication --> ReadyForInput
 ```
 
 ## Class Diagram
@@ -65,31 +59,26 @@ classDiagram
     }  
     class Config {  
       +void get_approved_docs_path(filename: str)  
-    }  
-    class Test {  
-      +void run_tests()  
-    }  
-    class OPS {  
-      +add()  
-      +sub()  
-      +mul()  
-      +div()  
-      +pow()  
-      +mod()  
-      +sqrt()  
-      +pct()  
-    }  
-    Calculator --> OPS  
-    AiNewsModule --> Config  
-    Calculator --> Config  
-    CalendarModule --> Config  
-    AuthModule --> Config  
-    Test --> AiNewsModule  
-    Test --> Calculator  
-    Test --> CalendarModule  
-    Test --> AuthModule
+    }
 ```
 
 ## Database Entity
 
-> No database evidence.
+```mermaid
+erDiagram  
+    USERS {  
+      INTEGER id  
+      TEXT username  
+      TEXT password_hash  
+      TEXT salt  
+      TEXT created_at  
+    }  
+    SESSIONS {  
+      INTEGER id  
+      INTEGER user_id  
+      TEXT token  
+      TEXT created_at  
+      TEXT expires_at  
+    }  
+    USERS ||--o{ SESSIONS : "has"
+```

@@ -1,3 +1,18 @@
 ```mermaid  
-  No database evidence.  
+erDiagram  
+    USERS {  
+      INTEGER id  
+      TEXT username  
+      TEXT password_hash  
+      TEXT salt  
+      TEXT created_at  
+    }  
+    SESSIONS {  
+      INTEGER id  
+      INTEGER user_id  
+      TEXT token  
+      TEXT created_at  
+      TEXT expires_at  
+    }  
+    USERS ||--o{ SESSIONS : "has"  
 ```
