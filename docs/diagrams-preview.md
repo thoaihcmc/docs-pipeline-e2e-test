@@ -15,7 +15,13 @@ graph TD;
     D -->|Calculates and fetches results| E[User Output];  
     E -->|Displays results| A;  
     A -->|Requests| F[CalendarModule];  
-    F -->|Displays today's date| E;
+    F -->|Displays today's date| E;  
+    A -->|Requests| G[AuthModule];  
+    A -->|Runs Tests| H[Test];  
+    H -->|Tests| B;  
+    H -->|Tests| D;  
+    H -->|Tests| F;  
+    H -->|Tests| G;
 ```
 
 ## State Machine
@@ -30,7 +36,10 @@ stateDiagram-v2
     Calculating --> DisplayingResult  
     DisplayingResult --> ReadyForInput  
     ReadyForInput --> DisplayingDate  
-    DisplayingDate --> ReadyForInput
+    DisplayingDate --> ReadyForInput  
+    ReadyForInput --> RunningTests  
+    RunningTests --> TestResult  
+    TestResult --> ReadyForInput
 ```
 
 ## Class Diagram
@@ -51,8 +60,14 @@ classDiagram
       +void show_cli()  
       +void show_gui()  
     }  
+    class AuthModule {  
+      +void require_auth(gui: bool)  
+    }  
     class Config {  
       +void get_approved_docs_path(filename: str)  
+    }  
+    class Test {  
+      +void run_tests()  
     }  
     class OPS {  
       +add()  
@@ -67,7 +82,12 @@ classDiagram
     Calculator --> OPS  
     AiNewsModule --> Config  
     Calculator --> Config  
-    CalendarModule --> Config
+    CalendarModule --> Config  
+    AuthModule --> Config  
+    Test --> AiNewsModule  
+    Test --> Calculator  
+    Test --> CalendarModule  
+    Test --> AuthModule
 ```
 
 ## Database Entity

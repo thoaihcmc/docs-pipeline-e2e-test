@@ -27,6 +27,10 @@ The purpose of this FDD is to detail the functionalities that will be implemente
    - The calendar module includes functionality to show today's date either in the command line interface or in a graphical interface.  
    - Evidence Path: "calendar_module.py"
 
+6. **Test Module**  
+   - The test module verifies the integrity and correctness of the functionalities through various test cases.  
+   - Evidence Path: "test"
+
 ## Use Cases  
 ### Fetch AI News  
 - **Actor**: User  
@@ -59,6 +63,17 @@ The purpose of this FDD is to detail the functionalities that will be implemente
   3. System displays the date to the user.  
    
    Evidence Path: "calendar_module.py"
+
+### Run Tests  
+- **Actor**: Developer  
+- **Precondition**: Developer has the test module set up.  
+- **Postcondition**: The test results are displayed showing the outcomes of the tests.  
+- **Flow**:  
+  1. Developer runs the test module.  
+  2. System executes various test cases against different functionalities.  
+  3. The results of the tests are displayed for review.  
+   
+   Evidence Path: "test"
 
 ## Conclusion  
 This FDD sets the foundation for the system's construction based on the outlined functional requirements.
