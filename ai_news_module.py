@@ -24,6 +24,8 @@ from urllib.parse import quote_plus
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
+from auth_module import require_auth
+
 
 _DEFAULT_QUERY = "artificial intelligence"
 _DEFAULT_COUNT = 5
@@ -210,6 +212,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    require_auth(gui=args.gui)
     if args.gui:
         show_gui(args.query, args.count)
         return

@@ -145,17 +145,27 @@ jobs:
         with:
           name: generated-docs
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Restore generated docs into repo
         run: |
           mkdir -p docs/diagrams
           cp -R docs/. docs/ 2>/dev/null || true
           ls -la docs/ docs/diagrams/
 
+      - name: Sync diagrams-preview.md
+        run: python scripts/sync_diagrams_preview.py --repo .
+
       - name: Create docs branch and open PR
+        id: create-pr
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ env.DOCS_BRANCH }}
+          delete-branch: true
           add-paths: |
             docs/
           commit-message: "docs: auto-generate FDD, BDD, ADD and diagrams for ${{ github.sha }}"
@@ -165,4 +175,9 @@ jobs:
             - FDD, BDD, ADD in `docs/`
             - Architecture, State Machine, Class, Database Entity diagrams in `docs/diagrams/`
             Please review and edit before merging.
-          labels: documentation
+
+      - name: Add labels to PR
+        if: steps.create-pr.outputs.pull-request-number
+        run: gh pr edit ${{ steps.create-pr.outputs.pull-request-number }} --add-label "documentation" || echo "Label 'documentation' not found — skipping."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

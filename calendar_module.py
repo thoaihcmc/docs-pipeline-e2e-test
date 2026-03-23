@@ -12,6 +12,8 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
 
+from auth_module import require_auth
+
 
 def get_today_date() -> str:
     """Return today's date in YYYY-MM-DD format."""
@@ -52,6 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    require_auth(gui=args.gui)
     if args.gui:
         show_gui()
         return

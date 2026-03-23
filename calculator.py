@@ -16,6 +16,8 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 
+from auth_module import require_auth
+
 
 OPS = {
     "add": lambda a, b: a + b,
@@ -229,6 +231,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    require_auth(gui=args.gui)
 
     if args.gui:
         run_gui()
