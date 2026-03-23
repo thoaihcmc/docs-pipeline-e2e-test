@@ -4,30 +4,38 @@
 The architecture of the system is designed in adherence to modern software engineering principles to ensure scalability and robustness.
 
 ### Architecture Overview  
-- **Frontend**: Command Line Interface (CLI) and Graphical User Interface (GUI) are available for user interaction with the calculator functionalities.  
-- **Backend**: Python scripts (`calculator.py`, `calendar_module.py`) that process calculator operations and manage inputs.
+- **Frontend**: Command Line Interface (CLI) and Graphical User Interface (GUI) are available for user interaction with functionalities: fetching AI news, performing calculations, and displaying today's date.  
+- **Backend**: Python scripts (`ai_news_module.py`, `calculator.py`, `calendar_module.py`, `config.py`) that process requests and manage inputs.
+
+### Components  
+- `ai_news_module.py`: Responsible for fetching and displaying the latest AI news articles.  
+- `calculator.py`: Handles various arithmetic operations and presents results.  
+- `calendar_module.py`: Provides functionality to display today's date.  
+- `config.py`: Holds configuration settings, paths, and document requirements.
 
 ### Component Diagram  
 ```mermaid
 classDiagram  
+  class AiNewsModule {  
+    +void fetch_news(query: str, count: int)  
+    +void show_cli()  
+    +void show_gui()  
+  }  
   class Calculator {  
     +void calculate(operation: str, a: float, b: float)  
     +void run_interactive()  
     +void run_gui()  
-    +static get_today_date()  
   }  
   class CalendarModule {  
     +void show_cli()  
     +void show_gui()  
-    +static get_today_date()  
   }  
-  class Operation {  
-    +String type  
-    +float operand1  
-    +float operand2  
+  class Config {  
+    +void get_approved_docs_path(filename: str)  
   }  
-  Calculator --> Operation
-  Calculator --> CalendarModule
+  AiNewsModule --> Config  
+  Calculator --> Config  
+  CalendarModule --> Config  
 ```  
 
 ### Database Schema  

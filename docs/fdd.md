@@ -7,24 +7,38 @@ This document outlines the functional requirements and specifications of the sys
 The purpose of this FDD is to detail the functionalities that will be implemented in the system, providing a comprehensive understanding of the expected features and operations.
 
 ### Requirements  
-1. **Calculator Operations**  
+1. **AI News Fetcher Module**  
+   - The module fetches the latest AI-related news articles from Google News RSS and displays them in CLI or GUI modes. It supports search queries and article count limitations in the output.  
+   - Evidence Path: "ai_news_module.py"
+
+2. **Calculator Operations**  
    - The calculator supports operations such as addition, subtraction, multiplication, division, power, modulus, square root, and percentage calculations. Each operation must be validated for correctness (e.g., no division/modulus by zero, and negative square roots).  
    - Evidence Path: "calculator.py"
 
-2. **User Interface**  
+3. **User Interface**  
    - The calculator must support both CLI and GUI modes. The GUI should allow operations selection and display results accordingly.  
    - Evidence Path: "calculator.py"
 
-3. **Calendar Module**  
+4. **Calendar Module**  
    - The calendar module allows users to display today's date via CLI or GUI.  
    - Evidence Path: "calendar_module.py"
 
-4. **Date Display Functionality**  
+5. **Date Display Functionality**  
    - The calendar module includes functionality to show today's date either in the command line interface or in a graphical interface.  
    - Evidence Path: "calendar_module.py"
 
-### Use Cases  
-#### Perform Calculator Operation  
+## Use Cases  
+### Fetch AI News  
+- **Actor**: User  
+- **Precondition**: User has opened the AI news module (CLI or GUI).  
+- **Postcondition**: The latest AI news articles are displayed.  
+- **Flow**:  
+  1. User specifies a search query and number of articles (if needed).  
+  2. System fetches and displays the results.  
+   
+   Evidence Path: "ai_news_module.py"
+
+### Perform Calculator Operation  
 - **Actor**: User  
 - **Precondition**: User has opened the calculator app (CLI or GUI).  
 - **Postcondition**: The calculator displays the result of the performed operation.  
@@ -35,7 +49,7 @@ The purpose of this FDD is to detail the functionalities that will be implemente
    
    Evidence Path: "calculator.py"
 
-#### Display Today's Date  
+### Display Today's Date  
 - **Actor**: User  
 - **Precondition**: User has opened the calendar module (CLI or GUI).  
 - **Postcondition**: The current date is displayed to the user.  
