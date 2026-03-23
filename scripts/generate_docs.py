@@ -64,6 +64,9 @@ def _build_system_prompt(manifest: dict, existing_docs: dict[str, str]) -> str:
         "5. Every element must be traceable to at least one evidence_path from evidence_ids.",
         "6. Use concrete names from the actual code (function names, class names, module names), never generic placeholders.",
         "7. If evidence is insufficient for a diagram type, write 'Not enough repository evidence' as a comment in the Mermaid source.",
+        "8. DATABASE DETECTION: look for CREATE TABLE, ALTER TABLE, INSERT, sqlite3, SQLAlchemy, Django models, "
+        "Sequelize, Prisma, TypeORM, Mongoose schemas, or any ORM/SQL embedded inside source files (Python, JS, etc.). "
+        "These count as database evidence even when the SQL is inside string literals or executescript() calls.",
         "",
         f"Commit: {commit}.",
         f"Changed files in this commit: {', '.join(changed) if changed else 'none'}.",
@@ -164,7 +167,11 @@ def _call_openai(manifest: dict, repo_path: str) -> dict:
         "4. Architecture diagram (Mermaid): show ALL modules and their relationships.\n"
         "5. State Machine diagram (Mermaid): show states/transitions from ALL relevant modules.\n"
         "6. Class diagram (Mermaid): show classes/functions from ALL source files.\n"
-        "7. Database Entity diagram (Mermaid): show entities/schemas if present, otherwise state 'No database evidence'.\n\n"
+        "7. Database Entity diagram (Mermaid erDiagram): extract ALL tables/entities from SQL statements "
+        "(CREATE TABLE, ALTER TABLE), ORM model definitions, or schema files found ANYWHERE in the evidence — "
+        "including inside Python/JS/TS string literals, executescript() calls, or migration files. "
+        "Show columns, types, and relationships (FK, references). "
+        "Only state 'No database evidence' if there are truly zero SQL or ORM patterns in ANY evidence file.\n\n"
         "Populate traceability so every section and every diagram node/edge references an evidence_path from evidence_ids.\n"
         "Every source file in primary_evidence_ids MUST be explicitly covered in ALL relevant outputs (docs AND diagrams)."
         + module_list_hint
