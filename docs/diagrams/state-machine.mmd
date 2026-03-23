@@ -11,4 +11,6 @@ stateDiagram-v2
     DisplayingDate --> ReadyForInput  
     ReadyForInput --> UserAuthentication  
     UserAuthentication --> ReadyForInput  
+    ReadyForInput --> RunningTests  
+    RunningTests --> ReadyForInput  
 ```

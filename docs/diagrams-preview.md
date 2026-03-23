@@ -16,7 +16,8 @@ graph TD;
     E -->|Displays results| A;  
     A -->|Requests| F[CalendarModule];  
     F -->|Displays today's date| E;  
-    A -->|Requests| G[AuthModule];
+    A -->|Requests| G[AuthModule];  
+    A -->|Runs Tests| H[Test];
 ```
 
 ## State Machine
@@ -33,7 +34,9 @@ stateDiagram-v2
     ReadyForInput --> DisplayingDate  
     DisplayingDate --> ReadyForInput  
     ReadyForInput --> UserAuthentication  
-    UserAuthentication --> ReadyForInput
+    UserAuthentication --> ReadyForInput  
+    ReadyForInput --> RunningTests  
+    RunningTests --> ReadyForInput
 ```
 
 ## Class Diagram
@@ -59,6 +62,9 @@ classDiagram
     }  
     class Config {  
       +void get_approved_docs_path(filename: str)  
+    }  
+    class Test {  
+      +void run_tests()  
     }
 ```
 
